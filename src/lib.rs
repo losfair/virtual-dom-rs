@@ -1,7 +1,7 @@
+pub mod node;
+pub mod view_state;
+pub mod utils;
+pub mod dom;
+
 #[cfg(test)]
-mod tests {
-    #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
-    }
-}
+mod view_state_test;
