@@ -1,10 +1,9 @@
-use std::rc::Rc;
 use std::collections::BTreeMap;
 use dom;
 
 #[derive(Clone)]
 pub struct BasicVNode {
-    pub tag: String,
+    pub tag: Option<String>,
     pub props: BTreeMap<String, String>,
     pub style: BTreeMap<String, String>,
     pub text: Option<String>
@@ -13,7 +12,7 @@ pub struct BasicVNode {
 pub struct InternalVNode<T: dom::Node> {
     node: BasicVNode,
     dom_node: T,
-    children: Vec<Rc<InternalVNode<T>>>
+    children: Vec<InternalVNode<T>>
 }
 
 pub struct AbstractVNode {
@@ -24,7 +23,7 @@ pub struct AbstractVNode {
 impl BasicVNode {
     pub fn new_element<T: AsRef<str>>(tag: T) -> BasicVNode {
         BasicVNode {
-            tag: tag.as_ref().to_string(),
+            tag: Some(tag.as_ref().to_string()),
             props: BTreeMap::new(),
             style: BTreeMap::new(),
             text: None
@@ -33,7 +32,7 @@ impl BasicVNode {
 
     pub fn new_text<T: AsRef<str>>(t: T) -> BasicVNode {
         BasicVNode {
-            tag: "".to_string(),
+            tag: None,
             props: BTreeMap::new(),
             style: BTreeMap::new(),
             text: Some(t.as_ref().to_string())
@@ -64,7 +63,7 @@ impl<T> InternalVNode<T> where T: dom::Node {
                 children: Vec::new()
             }
         } else {
-            let mut dom_node = T::new_element(root.node.tag.as_str());
+            let mut dom_node = T::new_element(root.node.tag.as_ref().unwrap().as_str());
             let mut children = Vec::new();
 
             for (k, v) in root.node.props.iter() {
@@ -78,7 +77,7 @@ impl<T> InternalVNode<T> where T: dom::Node {
             for c in root.children.iter() {
                 let child_node: InternalVNode<T> = InternalVNode::from_abstract(c);
                 dom_node.append_child(&child_node.dom_node);
-                children.push(Rc::new(child_node));
+                children.push(child_node);
             }
 
             InternalVNode {
@@ -87,6 +86,10 @@ impl<T> InternalVNode<T> where T: dom::Node {
                 children: children
             }
         }
+    }
+
+    pub fn into_dom_node(self) -> T {
+        self.dom_node
     }
 }
 
