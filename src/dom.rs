@@ -1,44 +1,82 @@
-use std::rc::Rc;
+use vnode::BasicVNode;
 
-pub struct DomContext {
+pub trait Node {
+    fn new_text(t: &str) -> Self;
+    fn new_element(tag: &str) -> Self;
+    fn append_child(&mut self, child: &Self);
+    fn set_property(&mut self, key: &str, value: &str);
+    fn set_style(&mut self, key: &str, value: &str);
+}
 
+pub struct DebugNode {
+}
+
+impl Node for DebugNode {
+    fn new_text(t: &str) -> Self {
+        println!("new_text: {}", t);
+        DebugNode {
+        }
+    }
+
+    fn new_element(tag: &str) -> Self {
+        println!("new_element: {}", tag);
+        DebugNode {
+        }
+    }
+
+    fn append_child(&mut self, child: &Self) {
+        println!("-> append_child");
+    }
+
+    fn set_property(&mut self, key: &str, value: &str) {
+        println!("-> set_property: {} = {}", key, value);
+    }
+
+    fn set_style(&mut self, key: &str, value: &str) {
+        println!("-> set_style: {} = {}", key, value);
+    }
 }
 
 #[derive(Clone)]
-pub struct DomState {
-    context: Rc<DomContext>
+pub enum LoggedAction {
+    AppendChild(LoggedNode),
+    SetProperty(String, String),
+    SetStyle(String, String)
 }
 
-impl DomState {
-    pub fn new_root(ctx: Rc<DomContext>) -> DomState {
-        DomState {
-            context: ctx
-        }
-    }
-
-    pub fn new_child(&self) -> DomState {
-        DomState {
-            context: self.context.clone()
-        }
-    }
-
-    pub fn set_prop<K: AsRef<str>, V: AsRef<str>>(&self, key: K, value: V) {
-
-    }
-
-    pub fn remove_prop<K: AsRef<str>>(&self, key: K) {
-
-    }
+#[derive(Clone)]
+pub struct LoggedNode {
+    pub text: Option<String>,
+    pub tag: Option<String>,
+    pub actions: Vec<LoggedAction>
 }
 
-impl DomContext {
-    pub fn new() -> DomContext {
-        DomContext {
-
+impl Node for LoggedNode {
+    fn new_text(t: &str) -> Self {
+        LoggedNode {
+            text: Some(t.to_string()),
+            tag: None,
+            actions: Vec::new()
         }
     }
 
-    pub fn rc(self) -> Rc<DomContext> {
-        Rc::new(self)
+    fn new_element(tag: &str) -> Self {
+        LoggedNode {
+            text: None,
+            tag: Some(tag.to_string()),
+            actions: Vec::new()
+        }
+    }
+
+    fn append_child(&mut self, child: &Self) {
+        self.actions.push(LoggedAction::AppendChild(child.clone()));
+    }
+
+    fn set_property(&mut self, key: &str, value: &str) {
+        self.actions.push(LoggedAction::SetProperty(key.to_string(), value.to_string()));
+    }
+
+    fn set_style(&mut self, key: &str, value: &str) {
+        self.actions.push(LoggedAction::SetStyle(key.to_string(), value.to_string()));
     }
 }
