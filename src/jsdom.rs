@@ -68,30 +68,3 @@ impl NativeNode {
         self.handle.unwrap()
     }
 }
-
-#[no_mangle]
-pub extern "C" fn vdcore_hello_world() -> usize {
-    let root = vtree::build_element(vtree::BuildElementOptions {
-        tag: "div".to_string(),
-        props: vdmap! {
-            "id" => "abc",
-            "className" => "test-class"
-        },
-        style: vdmap! {},
-        children: vec! [
-            vtree::build_element(vtree::BuildElementOptions {
-                tag: "p".to_string(),
-                props: vdmap! {},
-                style: vdmap! {
-                    "color" => "#FF0000"
-                },
-                children: vec! [
-                    vtree::build_text("Hello world")
-                ]
-            })
-        ]
-    });
-    let ivn: InternalVNode<NativeNode> = InternalVNode::from_abstract(&root);
-
-    ivn.into_dom_node().into_handle()
-}
