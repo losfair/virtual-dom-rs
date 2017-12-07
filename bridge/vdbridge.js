@@ -87,6 +87,10 @@ function init() {
         context.mem = inst.exports.memory;
         let id = inst.exports.vdcore_hello_world();
         console.log(context.bridge.resources[id]);
+
+        let container = document.getElementById("container");
+        container.innerHTML = "";
+        container.appendChild(context.bridge.resources[id]);
     });
 }
 
