@@ -50,6 +50,19 @@ class VDBridge {
         parent_elem.appendChild(child_elem);
     }
 
+    remove_child(parent, child) {
+        let parent_elem = this.get_resource(parent);
+        let child_elem = this.get_resource(child);
+        parent_elem.removeChild(child_elem);
+    }
+
+    replace_child(parent, new_child, old_child) {
+        let parent_elem = this.get_resource(parent);
+        let new_child_elem = this.get_resource(new_child);
+        let old_child_elem = this.get_resource(old_child);
+        parent_elem.replaceChild(new_child_elem, old_child_elem);
+    }
+
     set_property(id, key, value) {
         let elem = this.get_resource(id);
         elem[key] = value;
@@ -114,6 +127,12 @@ function build_env(context) {
         },
         vdbridge_append_child(parent, child) {
             return bridge.append_child(parent, child);
+        },
+        vdbridge_remove_child(parent, child) {
+            return bridge.remove_child(parent, child);
+        },
+        vdbridge_replace_child(parent, new_child, old_child) {
+            return bridge.replace_child(parent, new_child, old_child);
         },
         vdbridge_set_property(handle, k, v) {
             return bridge.set_property(handle, read_string(k), read_string(v));
