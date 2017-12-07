@@ -92,6 +92,10 @@ impl<T> InternalVNode<T> where T: dom::Node {
     pub fn into_dom_node(self) -> T {
         self.dom_node
     }
+
+    pub fn borrow_dom_node(&self) -> &T {
+        &self.dom_node
+    }
 }
 
 #[test]

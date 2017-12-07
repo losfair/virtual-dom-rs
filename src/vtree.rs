@@ -5,6 +5,7 @@ use vnode::{BasicVNode, AbstractVNode};
 macro_rules! vdmap {
     ( $($key:expr => $value:expr),* ) => {
         {
+            #[allow(unused_mut)]
             let mut m = ::std::collections::BTreeMap::new();
             $(
                 m.insert($key.to_string(), $value.to_string());

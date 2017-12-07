@@ -14,44 +14,58 @@ extern "C" {
 }
 
 pub struct NativeNode {
-    handle: usize
+    handle: Option<usize>
 }
 
 impl Node for NativeNode {
     fn new_text(t: &str) -> Self {
         let t = CString::new(t).unwrap();
         NativeNode {
-            handle: unsafe { vdbridge_create_text_node(t.as_ptr()) }
+            handle: Some(unsafe { vdbridge_create_text_node(t.as_ptr()) })
         }
     }
 
     fn new_element(tag: &str) -> Self {
         let tag = CString::new(tag).unwrap();
         NativeNode {
-            handle: unsafe { vdbridge_create_element(tag.as_ptr()) }
+            handle: Some(unsafe { vdbridge_create_element(tag.as_ptr()) })
         }
     }
 
     fn append_child(&mut self, child: &Self) {
-        unsafe { vdbridge_append_child(self.handle, child.handle); }
+        unsafe { vdbridge_append_child(self.handle.unwrap(), child.handle.unwrap()); }
     }
 
     fn set_property(&mut self, key: &str, value: &str) {
         let key = CString::new(key).unwrap();
         let value = CString::new(value).unwrap();
-        unsafe { vdbridge_set_property(self.handle, key.as_ptr(), value.as_ptr() ); }
+        unsafe { vdbridge_set_property(self.handle.unwrap(), key.as_ptr(), value.as_ptr() ); }
     }
 
     fn set_style(&mut self, key: &str, value: &str) {
         let key = CString::new(key).unwrap();
         let value = CString::new(value).unwrap();
-        unsafe { vdbridge_set_style(self.handle, key.as_ptr(), value.as_ptr() ); }
+        unsafe { vdbridge_set_style(self.handle.unwrap(), key.as_ptr(), value.as_ptr() ); }
     }
 }
 
 impl Drop for NativeNode {
     fn drop(&mut self) {
-        unsafe { vdbridge_release_node(self.handle); }
+        if let Some(handle) = self.handle {
+            unsafe { vdbridge_release_node(handle); }
+        }
+    }
+}
+
+impl NativeNode {
+    pub fn into_handle(mut self) -> usize {
+        let handle = self.handle.unwrap();
+        self.handle = None;
+        handle
+    }
+
+    pub unsafe fn get_handle(&self) -> usize {
+        self.handle.unwrap()
     }
 }
 
@@ -79,9 +93,5 @@ pub extern "C" fn vdcore_hello_world() -> usize {
     });
     let ivn: InternalVNode<NativeNode> = InternalVNode::from_abstract(&root);
 
-    let dom_node = ivn.into_dom_node();
-    let handle = dom_node.handle;
-    ::std::mem::forget(dom_node);
-
-    handle
+    ivn.into_dom_node().into_handle()
 }
