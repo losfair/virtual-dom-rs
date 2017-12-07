@@ -5,8 +5,4 @@ authors = ["losfair <zhy20000919@hotmail.com>"]
 description = "Virtual DOM"
 license = "LGPL-3.0"
 
-[lib]
-name = "virtual_dom"
-crate-type = ["cdylib"]
-
 [dependencies]
