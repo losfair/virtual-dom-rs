@@ -8,6 +8,8 @@ extern "C" {
     fn vdbridge_create_element(tag: *const c_char) -> usize;
     fn vdbridge_create_text_node(text: *const c_char) -> usize;
     fn vdbridge_append_child(parent: usize, child: usize);
+    fn vdbridge_remove_child(parent: usize, child: usize);
+    fn vdbridge_replace_child(parent: usize, new_child: usize, old_child: usize);
     fn vdbridge_set_property(handle: usize, key: *const c_char, value: *const c_char);
     fn vdbridge_set_style(handle: usize, key: *const c_char, value: *const c_char);
     fn vdbridge_release_node(handle: usize);
@@ -36,17 +38,55 @@ impl Node for NativeNode {
         unsafe { vdbridge_append_child(self.handle.unwrap(), child.handle.unwrap()); }
     }
 
-    fn set_property(&mut self, key: &str, value: &str) {
-        let key = CString::new(key).unwrap();
-        let value = CString::new(value).unwrap();
-        unsafe { vdbridge_set_property(self.handle.unwrap(), key.as_ptr(), value.as_ptr() ); }
+    fn remove_child(&mut self, child: &Self) {
+        unsafe { vdbridge_remove_child(self.handle.unwrap(), child.handle.unwrap()); }
     }
 
-    fn set_style(&mut self, key: &str, value: &str) {
-        let key = CString::new(key).unwrap();
-        let value = CString::new(value).unwrap();
-        unsafe { vdbridge_set_style(self.handle.unwrap(), key.as_ptr(), value.as_ptr() ); }
+    fn replace_child(&mut self, new_child: &Self, old_child: &Self) {
+        unsafe { vdbridge_replace_child(
+            self.handle.unwrap(),
+            new_child.handle.unwrap(),
+            old_child.handle.unwrap()
+        ); }
     }
+
+    fn set_property(&mut self, key: &str, value: Option<&str>) {
+        let key = CString::new(key).unwrap();
+        let value = if let Some(v) = value {
+            Some(CString::new(v).unwrap())
+        } else {
+            None
+        };
+        unsafe { vdbridge_set_property(
+            self.handle.unwrap(),
+            key.as_ptr(),
+            if let Some(ref v) = value {
+                v.as_ptr()
+            } else {
+                ::std::ptr::null()
+            }
+        ); }
+    }
+
+    fn set_style(&mut self, key: &str, value: Option<&str>) {
+        let key = CString::new(key).unwrap();
+        let value = if let Some(v) = value {
+            Some(CString::new(v).unwrap())
+        } else {
+            None
+        };
+        unsafe { vdbridge_set_style(
+            self.handle.unwrap(),
+            key.as_ptr(),
+            if let Some(ref v) = value {
+                v.as_ptr()
+            } else {
+                ::std::ptr::null()
+            }
+        ); }
+    }
+
+
 }
 
 impl Drop for NativeNode {

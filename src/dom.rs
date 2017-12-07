@@ -4,8 +4,14 @@ pub trait Node {
     fn new_text(t: &str) -> Self;
     fn new_element(tag: &str) -> Self;
     fn append_child(&mut self, child: &Self);
-    fn set_property(&mut self, key: &str, value: &str);
-    fn set_style(&mut self, key: &str, value: &str);
+    fn remove_child(&mut self, child: &Self) {
+        unimplemented!();
+    }
+    fn replace_child(&mut self, new_child: &Self, old_child: &Self) {
+        unimplemented!();
+    }
+    fn set_property(&mut self, key: &str, value: Option<&str>);
+    fn set_style(&mut self, key: &str, value: Option<&str>);
 }
 
 pub struct DebugNode {
@@ -28,12 +34,12 @@ impl Node for DebugNode {
         println!("-> append_child");
     }
 
-    fn set_property(&mut self, key: &str, value: &str) {
-        println!("-> set_property: {} = {}", key, value);
+    fn set_property(&mut self, key: &str, value: Option<&str>) {
+        println!("-> set_property: {} = {:?}", key, value);
     }
 
-    fn set_style(&mut self, key: &str, value: &str) {
-        println!("-> set_style: {} = {}", key, value);
+    fn set_style(&mut self, key: &str, value: Option<&str>) {
+        println!("-> set_style: {} = {:?}", key, value);
     }
 }
 
@@ -72,11 +78,11 @@ impl Node for LoggedNode {
         self.actions.push(LoggedAction::AppendChild(child.clone()));
     }
 
-    fn set_property(&mut self, key: &str, value: &str) {
-        self.actions.push(LoggedAction::SetProperty(key.to_string(), value.to_string()));
+    fn set_property(&mut self, key: &str, value: Option<&str>) {
+        self.actions.push(LoggedAction::SetProperty(key.to_string(), value.unwrap_or("").to_string()));
     }
 
-    fn set_style(&mut self, key: &str, value: &str) {
-        self.actions.push(LoggedAction::SetStyle(key.to_string(), value.to_string()));
+    fn set_style(&mut self, key: &str, value: Option<&str>) {
+        self.actions.push(LoggedAction::SetStyle(key.to_string(), value.unwrap_or("").to_string()));
     }
 }

@@ -1,6 +1,7 @@
 use std::collections::BTreeMap;
 use vtree;
 use dom;
+use map_diff;
 
 #[derive(Clone)]
 pub struct BasicVNode {
@@ -16,6 +17,7 @@ pub struct InternalVNode<T: dom::Node> {
     children: Vec<InternalVNode<T>>
 }
 
+#[derive(Clone)]
 pub struct AbstractVNode {
     node: BasicVNode,
     children: Vec<AbstractVNode>
@@ -68,11 +70,11 @@ impl<T> InternalVNode<T> where T: dom::Node {
             let mut children = Vec::new();
 
             for (k, v) in root.node.props.iter() {
-                dom_node.set_property(k.as_str(), v.as_str());
+                dom_node.set_property(k.as_str(), Some(v.as_str()));
             }
 
             for (k, v) in root.node.style.iter() {
-                dom_node.set_style(k.as_str(), v.as_str());
+                dom_node.set_style(k.as_str(), Some(v.as_str()));
             }
 
             for c in root.children.iter() {
@@ -87,6 +89,69 @@ impl<T> InternalVNode<T> where T: dom::Node {
                 children: children
             }
         }
+    }
+
+    // The return value indicates whether a new dom_node is
+    // created (Some(original_dom_node)) or the original
+    // dom_node is updated (None).
+    pub fn update(&mut self, root: &AbstractVNode) -> Option<T> {
+        if self.node.tag != root.node.tag || self.node.text != root.node.text {
+            let orig = ::std::mem::replace(self, Self::from_abstract(root));
+            return Some(orig.dom_node);
+        }
+
+        // A text node does not have any props, styles or children.
+        if self.node.text.is_some() {
+            return None;
+        }
+
+        {
+            let prop_insertions = map_diff::btreemap_insertions(&root.node.props, &self.node.props, true);
+            let prop_removals = map_diff::btreemap_insertions(&self.node.props, &root.node.props, false);
+
+            for (k, v) in prop_insertions {
+                self.dom_node.set_property(k.as_str(), Some(v.as_str()));
+            }
+            for (k, v) in prop_removals {
+                self.dom_node.set_property(k.as_str(), None);
+            }
+
+            let style_insertions = map_diff::btreemap_insertions(&root.node.style, &self.node.style, true);
+            let style_removals = map_diff::btreemap_insertions(&self.node.style, &root.node.style, false);
+
+            for (k, v) in style_insertions {
+                self.dom_node.set_style(k.as_str(), Some(v.as_str()));
+            }
+            for (k, v) in style_removals {
+                self.dom_node.set_style(k.as_str(), None);
+            }
+        }
+        self.node.props = root.node.props.clone();
+        self.node.style = root.node.style.clone();
+
+        while self.children.len() > root.children.len() {
+            let last = self.children.pop().unwrap();
+            self.dom_node.remove_child(&last.dom_node);
+        }
+
+        // self.children.len() <= root.children.len() holds here.
+
+        let mut pos = 0;
+        while pos < self.children.len() {
+            let orig_dom_node = self.children[pos].update(&root.children[pos]);
+            if let Some(orig_dom_node) = orig_dom_node {
+                self.dom_node.replace_child(&self.children[pos].dom_node, &orig_dom_node);
+            }
+            pos += 1;
+        }
+        while pos < root.children.len() {
+            let new_node = Self::from_abstract(&root.children[pos]);
+            self.dom_node.append_child(&new_node.dom_node);
+            self.children.push(new_node);
+            pos += 1;
+        }
+
+        None
     }
 
     pub fn into_dom_node(self) -> T {
