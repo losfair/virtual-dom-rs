@@ -1,4 +1,5 @@
 use std::collections::BTreeMap;
+use vtree;
 use dom;
 
 #[derive(Clone)]
@@ -97,14 +98,24 @@ impl<T> InternalVNode<T> where T: dom::Node {
 fn test_basic_conversion() {
     use dom::LoggedAction::*;
 
-    let mut root = BasicVNode::new_element("div");
-    root.props.insert("id".to_string(), "abc".to_string());
-    let mut root = AbstractVNode::new(root);
+    let root = vtree::build_element(vtree::BuildElementOptions {
+        tag: "div".to_string(),
+        props: vdmap! {
+            "id" => "abc"
+        },
+        style: vdmap! {},
+        children: vec! [
+            vtree::build_element(vtree::BuildElementOptions {
+                tag: "p".to_string(),
+                props: vdmap! {},
+                style: vdmap! {},
+                children: vec! [
+                    vtree::build_text("Hello world")
+                ]
+            })
+        ]
+    });
 
-    let mut p_1 = AbstractVNode::new(BasicVNode::new_element("p"));
-    p_1.append_child(AbstractVNode::new(BasicVNode::new_text("Hello world")));
-
-    root.append_child(p_1);
     //let ivn: InternalVNode<dom::DebugNode> = InternalVNode::from_abstract(&root);
     let ivn: InternalVNode<dom::LoggedNode> = InternalVNode::from_abstract(&root);
     

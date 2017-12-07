@@ -2,6 +2,7 @@ use std::os::raw::c_char;
 use std::ffi::{CStr, CString};
 use dom::Node;
 use vnode::{BasicVNode, AbstractVNode, InternalVNode};
+use vtree;
 
 extern "C" {
     fn vdbridge_create_element(tag: *const c_char) -> usize;
@@ -56,15 +57,26 @@ impl Drop for NativeNode {
 
 #[no_mangle]
 pub extern "C" fn vdcore_hello_world() -> usize {
-    let mut root = BasicVNode::new_element("div");
-    root.props.insert("id".to_string(), "abc".to_string());
-    let mut root = AbstractVNode::new(root);
-
-    let mut p_1 = AbstractVNode::new(BasicVNode::new_element("p"));
-    p_1.append_child(AbstractVNode::new(BasicVNode::new_text("Hello world")));
-
-    root.append_child(p_1);
-    //let ivn: InternalVNode<dom::DebugNode> = InternalVNode::from_abstract(&root);
+    let root = vtree::build_element(vtree::BuildElementOptions {
+        tag: "div".to_string(),
+        props: vdmap! {
+            "id" => "abc",
+            "className" => "test-class"
+        },
+        style: vdmap! {},
+        children: vec! [
+            vtree::build_element(vtree::BuildElementOptions {
+                tag: "p".to_string(),
+                props: vdmap! {},
+                style: vdmap! {
+                    "color" => "#FF0000"
+                },
+                children: vec! [
+                    vtree::build_text("Hello world")
+                ]
+            })
+        ]
+    });
     let ivn: InternalVNode<NativeNode> = InternalVNode::from_abstract(&root);
 
     let dom_node = ivn.into_dom_node();
