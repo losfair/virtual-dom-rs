@@ -65,33 +65,31 @@ class VDBridge {
     }
 }
 
-function init() {
+function load_module_from_arraybuffer(buffer) {
     let context = {
         mem: null,
-        bridge: new VDBridge()
+        bridge: new VDBridge(),
+        instance: null
     };
 
-    fetch("vdcore.wasm")
-    .then(resp => resp.arrayBuffer())
-    .then(data => WebAssembly.compile(data))
-    .then(module => {
-        return WebAssembly.instantiate(
+    return WebAssembly.compile(buffer)
+        .then(module => WebAssembly.instantiate(
             module,
             {
                 env: build_env(context)
             }
-        );
-    })
-    .then(inst => {
-        console.log("init ok");
-        context.mem = inst.exports.memory;
-        let id = inst.exports.vdcore_hello_world();
-        console.log(context.bridge.resources[id]);
+        ))
+        .then(inst => {
+            context.mem = inst.exports.memory;
+            context.instance = inst;
+            return context;
+        });
+}
 
-        let container = document.getElementById("container");
-        container.innerHTML = "";
-        container.appendChild(context.bridge.resources[id]);
-    });
+function fetch_and_load_module(url) {
+    return fetch(url)
+        .then(resp => resp.arrayBuffer())
+        .then(data => load_module_from_arraybuffer(data));
 }
 
 function build_env(context) {
@@ -129,6 +127,9 @@ function build_env(context) {
     };
 }
 
-window.addEventListener("load", init);
+window.vdbridge = {
+    load_module_from_arraybuffer: load_module_from_arraybuffer,
+    fetch_and_load_module: fetch_and_load_module
+};
 
 })();
