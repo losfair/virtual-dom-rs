@@ -67,12 +67,20 @@ class VDBridge {
 
     set_property(id, key, value) {
         let elem = this.get_resource(id);
-        elem[key] = value;
+        if(value === null) {
+            elem.removeAttribute(key);
+        } else {
+            elem.setAttribute(key, value);
+        }
     }
 
     set_style(id, key, value) {
         let elem = this.get_resource(id);
-        elem.style[key] = value;
+        if(value === null) {
+            elem.style.removeProperty(key);
+        } else {
+            elem.style.setProperty(key, value);
+        }
     }
 
     release_node(id) {
@@ -110,6 +118,8 @@ function fetch_and_load_module(url) {
 function build_env(context) {
     let bridge = context.bridge;
     let read_string = (ptr) => {
+        if(!ptr) return null;
+
         let buf = new Uint8Array(context.mem.buffer);
         let bytes = [];
         while(buf[ptr]) {
