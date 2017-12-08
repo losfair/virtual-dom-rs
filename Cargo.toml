@@ -4,6 +4,7 @@ version = "0.1.0"
 authors = ["losfair <zhy20000919@hotmail.com>"]
 description = "Virtual DOM"
 license = "LGPL-3.0"
+repository = "https://github.com/losfair/virtual-dom-rs"
 
 [dependencies]
 select = "0.4"
