@@ -3,7 +3,7 @@ use vtree;
 use dom;
 use map_diff;
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct BasicVNode {
     pub tag: Option<String>,
     pub props: BTreeMap<String, String>,
@@ -17,10 +17,10 @@ pub struct InternalVNode<T: dom::Node> {
     children: Vec<InternalVNode<T>>
 }
 
-#[derive(Clone)]
+#[derive(Clone, Eq, PartialEq, Debug)]
 pub struct AbstractVNode {
-    node: BasicVNode,
-    children: Vec<AbstractVNode>
+    pub node: BasicVNode,
+    pub children: Vec<AbstractVNode>
 }
 
 impl BasicVNode {

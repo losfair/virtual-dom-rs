@@ -1,3 +1,5 @@
+extern crate select;
+
 #[macro_use]
 pub mod vtree;
 pub mod vnode;
