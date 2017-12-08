@@ -1,5 +1,7 @@
 (function() {
 
+let global_debug = false;
+
 class VDBridge {
     constructor() {
         this.next_id = 0;
@@ -118,7 +120,7 @@ function build_env(context) {
         return new TextDecoder().decode(out);
     };
 
-    return {
+    let env = {
         vdbridge_create_element(tag) {
             return bridge.create_element(read_string(tag));
         },
@@ -144,11 +146,36 @@ function build_env(context) {
             return bridge.release_node(handle);
         }
     };
+
+    if(global_debug) {
+        let proxy = new Proxy({}, {
+            get: (_target, key) => {
+                let fn = env[key];
+                return function() {
+                    let args = [];
+                    for(let i = 0; i < arguments.length; i++) {
+                        args.push("" + arguments[i]);
+                    }
+                    console.log(`[${key}] ${args.join(",")}`);
+                    return fn(...args);
+                }
+            }
+        });
+        return proxy;
+    } else {
+        return env;
+    }
 }
 
 window.vdbridge = {
     load_module_from_arraybuffer: load_module_from_arraybuffer,
-    fetch_and_load_module: fetch_and_load_module
+    fetch_and_load_module: fetch_and_load_module,
+    enable_global_debug() {
+        global_debug = true;
+    },
+    disable_global_debug() {
+        global_debug = false;
+    }
 };
 
 })();
